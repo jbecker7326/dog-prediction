@@ -2,17 +2,18 @@
 
 <br><br> 
 
-<div>
-<p style="text-align:center; background-color: darkgray; color: lightyellow; border-radius:10px; line-height:1.4; font-size:32px; font-weight:bold; padding: 9px;">
+<h1>
+<p align = "center" background-color = "darkgray">
             <strong>Dog Breed Image Classification</strong>
 </p>  
-  
-<p style="text-align:center; color: Black; border-radius:10px; font-family:helvetica; line-height:1.0; font-size:28px; font-weight:normal; text-transform: capitalize; padding: 5px;">
+</h1>
+<h2>
+<p align = "center">
     End-to-end Deep Learning Project for
     <br>Dog Breed Multi-Class Image Classification:
     <br>EDA, Transfer Learning, Fine-Tuning, and Model Deployment
 </p>
-</div>
+</h2>
 
 # 1. Introduction
 
@@ -32,7 +33,7 @@ The following study explores the multi-class [stanford dogs image dataset](https
 - [EfficientNetB3](https://arxiv.org/abs/1905.11946)
 - [ConvNeXtSmall](https://arxiv.org/abs/2201.03545)
 
-Finally, we'll save the best model with tensorflow lite, create a docker image for the environment with minimized dependencies, and deploy it to the cloud using AWS Lambda.
+Finally, we'll save the best model with tensorflow lite, create a docker image for the environment with minimized dependencies, deploy it to the cloud using AWS Lambda and with Streamlit.
 
 **WARNING**: Do not attempt to run the enitre notebook without a CUDA-enabled GPU. The models may take hours or even days to train. See section 3.2 for more information on how to check for an available GPU.
 
@@ -57,11 +58,16 @@ The table of contents for the repository is as follows.
     - Comparison and analysis of all four tuned models to determine the final model: EfficientNetB3V2
     - Save to EfficientNetB3 TFLite
 - 3.3 - Local deployment with Docker
-    - Model prediction with lambda_function.py
     - Test with test.py
-- 3.4 - Cloud deployment with AWS Lambda
     - Model prediction with lambda_function.py
+- 3.4 - Cloud deployment with AWS Lambda
     - Test with test_cloud.py
+    - Model prediction with lambda_function.py
+- 3.5 - Application deployment with Streamlit
+    - Local deployment for testing
+    - Model prediction with streamlit_app.py
+
+
 ### 4. References
 - References for all model architectures and Keras documentation
 
@@ -93,6 +99,7 @@ dog-prediction
     │   notebook_orig.ipynb - EDA, modeling and hyperparameter tuning - training output kept
     │   test.py - Tests local inference
     │   test_cloud.py - Tests cloud inference
+    │   streamlit_app.py - Application for streamlit cloud
 ```
 
 ## 1.4 Dataset Source
@@ -160,12 +167,6 @@ For a windows build with a cuda-enabled nvidia graphics card, please run the fol
 
 ``conda install -c nvidia cuda-nvcc``
 
-### Creating conda environment from environment.yml
-
-Alternatively, you can run the following command to create the environment dog-prediction directly, with cuda support installed for windows.
-
-``conda env create --file environment.yml``
-
 
 # 3. Directions
 
@@ -221,7 +222,7 @@ For each model, we used validation curves to tune within the following parameter
 We then unfroze the first 4 layers and re-trained the model with the best performing hyperparameters on the held-out test set. Each of the best performing models are compared in the following notebook section.
 
 
-**Xception**
+### Xception
 
 - Reference: [xception: Deep Learning with Depthwise Separable Convolutions](https://arxiv.org/abs/1610.02357)
 
@@ -229,7 +230,7 @@ Xception is "a deep convolutional neural network architecture inspired by Incept
 
 <img src="figures/xception-architecture.PNG" width="700">
 
-The tuned parameter values and performance metrics can be seen below.
+The tuned parameter values and performance metrics can be seen below. The trained tuned model is uploaded to [Xception_model.keras](models/Xception_model.keras).
 
 Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
 --- | --- | --- | --- | --- | --- | --- | ---
@@ -238,20 +239,15 @@ Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test p
 <img src="figures/xception-tuned.PNG" width="500">
 
 
-**InceptionResNetV2**
+### InceptionResNetV2
 
-[InceptionResNetV2 Application - Keras](https://keras.io/api/applications/inceptionresnetv2/)
-
-**Reference**
-- [Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning](https://arxiv.org/abs/1602.07261) (AAAI 2017)
-
-**Base Model Architecture**
+- Reference: [Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning](https://arxiv.org/abs/1602.07261) (AAAI 2017)
 
 Figures 3-9 from [Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning](https://arxiv.org/abs/1602.07261) (AAAI 2017). Figure 3 shows the architecture divided into blocks. The full architecture next to it is taken from figures 4-9. Note that each inception block is repeated the number of times as specified in figure 3, and also next to the Filter concat block. For Reduction-B, the k, l, m, n numbers represent filter bank sizes which can be looked up in Table 1.
 
 <img src="figures/resnetv2-architecture.PNG" width="1000">
 
-The tuned parameter values and performance metrics can be seen below.
+The tuned parameter values and performance metrics can be seen below. The trained tuned model was too large to upload to github and is excluded from the repository.
 
 Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
 --- | --- | --- | --- | --- | --- | --- | ---
@@ -259,24 +255,17 @@ Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test p
 
 <img src="figures/inception-tuned.PNG" width="500">
 
+
 ### EfficientNetB3V2
 
-[EfficientNetB3 Application - Keras](https://keras.io/api/applications/efficientnet/#efficientnetb3-function)
-
-[Efficientnet Fine Tuning - Keras](https://keras.io/examples/vision/image_classification_efficientnet_fine_tuning/)
-
-**Reference**
-- [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946) (ICML 2019)
-
-**Base Model Architecture**
+- Reference: [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946) (ICML 2019)
 
 The EfficientNet baseline architecture leverages a multi-objective neural architecture search that optimizes both accuracy and FLOPS. EfficientNetB0 is shown in Table 1 below from the paper, using MBConv layers from ([Sandler et al., 2018](https://arxiv.org/abs/1801.04381); [Tan et al., 2019](https://arxiv.org/abs/1807.11626)). EfficientNetB3 is a scaled-up version, using uniform dimension scaling as shown in (e) from the figure 2 below.
 
 <img src="figures/efficientnetb3-table.PNG" width="350">
 <img src="figures/efficientnetb3-scaling.PNG" width="700">
 
-The tuned parameter values and performance metrics can be seen below.
-
+The tuned parameter values and performance metrics can be seen below. The trained tuned model is uploaded to [effnetV2B3_model.keras](models/effnetV2B3_model.keras).
 
 Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
 --- | --- | --- | --- | --- | --- | --- | ---
@@ -287,18 +276,13 @@ Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test p
 
 ### ConvNeXtSmall
 
-[ConvNeXtSmall Application - Keras](https://keras.io/api/applications/convnext/#convnextsmall-function)
-
-**Reference**
-- [A ConvNet for the 2020s](https://arxiv.org/abs/2201.03545) (CVPR 2022)
-
-**Base Model Architecture**
+- Reference: [A ConvNet for the 2020s](https://arxiv.org/abs/2201.03545) (CVPR 2022)
 
 ConvNeXt is a family of architectures that aims to make transformers viable for computer vision, aiding in tasks suck as object detection and semantic segmentation. They outperform other transformers while maintaining the simplicity and efficiency of standard ConvNets. Table 9 from the paper shows the architecture for ConvNeXt-T compared with ResNet-50 () and Swin-T (Ze et al, 2021)[https://arxiv.org/abs/2103.14030]. For differently sized ConvNeXts, only the number of blocks and the number of channels at each stage differ from ConvNeXt-T. The number of channels doubles at each new stage, so ConvNeXt-Small has double the number of channels.
 
 <img src="figures/convnextsmall-table.PNG" width="500">
 
-The tuned parameter values and performance metrics can be seen below.
+The tuned parameter values and performance metrics can be seen below. The trained tuned model was too large to upload to github and is excluded from the repository.
 
 Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
 --- | --- | --- | --- | --- | --- | --- | ---
@@ -307,16 +291,17 @@ Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test p
 <img src="figures/convnextsmall-tuned.PNG" width="500">
 
 
-### - Compare all models
+### Compare all models
 
-The following table compiles performance metrics for all four trained models. EfficientNetB3V2 was our best performing model across all metrics. It also has the smallest size and a relatively small number of parameters, so we can assume it will run fairly fast.
+The following table compiles performance metrics for all four trained models. EfficientNetB3V2 was our best performing model across all metrics. It also has the smallest size and a relatively small number of parameters, so we can assume it will run fairly fast. It was converted to tflite and saved to [model.tflite](models/model.tflite) for efficient performance during deployment.
 
-Model | Size | Parameters (k) | Train Time (s) | Inference Time (s) | Test precision | Test recall | Test f1
---- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+Model | Size | Parameters (k) | Train Time (s) | Inference Time (s) | Test accuracy | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | --- | ---
 Xception | 82.333 | 21078 | 70.203 | 12.696 | 0.901 | 0.898 | 0.900 | 0.897
 InceptionV2 | 210.371 | 11198 | 100.762 | 24.258 | 0.920 | 0.917 | 0.921 | 0.916
 EfficientNetB3V2 | 54.715 | 13344 | 66.558 | 13.107 | 0.945 | 0.944 | 0.945 | 0.944
 ConvNeXtSmall | 191.716 | 49677 | 265.549 | 160.441 | 0.939 | 0.938 | 0.940 | 0.937
+
 
 ## 3.2 - Local Deployment
 
@@ -329,7 +314,19 @@ This will build an image from the [dockerfile](../Dockerfile) using python 3.10,
 
 ## 3.3 - Cloud Deployment
 
-The model is also deployed to an AWS Lambda function hosted by a docker image on AWS EC2. Run ``python test_cloud.py`` to run inference on the cloud model instead. It also also expected to return the dog breed for the example image, 'Redbone'
+The model is also deployed to an AWS Lambda function running with a docker image hosted on AWS EC2. Run ``python test_cloud.py`` to run inference on the cloud model instead. It also also expected to return the dog breed for the example image, 'Redbone'
+
+## 3.4 - Application Deployment
+
+The model is also deployed to an interactive application hosted by Streamlit. Run ``streamlit run python/streamlit_app.py`` to test it locally, or go to [https://dog-prediction.streamlit.app/](https://dog-prediction.streamlit.app/) to use the deployed application.
+
+- Drag or drop a file to the file input widget
+- Click predict
+- Results show top 5 matched breeds for your image
+
+See below for an example:
+
+<img src="figures/app.PNG">
 
 
 # 4. References
