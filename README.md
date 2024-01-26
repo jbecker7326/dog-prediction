@@ -62,9 +62,7 @@ The table of contents for the repository is as follows.
 - 3.4 - Cloud deployment with AWS Lambda
     - Model prediction with lambda_function.py
     - Test with test_cloud.py
-### 4. Models
-
-### 5. References
+### 4. References
 - References for all model architectures and Keras documentation
 
 
@@ -233,8 +231,8 @@ Xception is "a deep convolutional neural network architecture inspired by Incept
 
 The tuned parameter values and performance metrics can be seen below.
 
-Learning rate| Inner layer size | Dropout rate | Test accuracy | Test precision | Test recall | Test f1
---- | --- | --- | --- | --- | --- | --- | --- | ---
+Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | ---
 0.0001 | 100 | 0.4 | 13 | 0.901 | 0.898 | 0.900 | 0.897
 
 <img src="figures/xception-tuned.PNG" width="500">
@@ -255,8 +253,8 @@ Figures 3-9 from [Inception-v4, Inception-ResNet and the Impact of Residual Conn
 
 The tuned parameter values and performance metrics can be seen below.
 
-Learning rate| Inner layer size | Dropout rate | Test accuracy | Test precision | Test recall | Test f1
---- | --- | --- | --- | --- | --- | --- | --- | ---
+Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | ---
 0.0001 | 100 | 0.4 | 15 | 0.920 | 0.917 | 0.921 | 0.916
 
 <img src="figures/inception-tuned.PNG" width="500">
@@ -279,8 +277,9 @@ The EfficientNet baseline architecture leverages a multi-objective neural archit
 
 The tuned parameter values and performance metrics can be seen below.
 
-Learning rate| Inner layer size | Dropout rate | Test accuracy | Test precision | Test recall | Test f1
---- | --- | --- | --- | --- | --- | --- | --- | ---
+
+Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | ---
 0.0001 | 250 | 0.6 | 18 | 0.920 | 0.917 | 0.921 | 0.916
 
 <img src="figures/efficientnet-tuned.PNG" width="500">
@@ -301,8 +300,8 @@ ConvNeXt is a family of architectures that aims to make transformers viable for 
 
 The tuned parameter values and performance metrics can be seen below.
 
-Learning rate| Inner layer size | Dropout rate | Test accuracy | Test precision | Test recall | Test f1
---- | --- | --- | --- | --- | --- | --- | --- | ---
+Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | ---
 0.0001 | 250 | 0.6 | 18 | 0.945 | 0.944 | 0.945 | 0.944
 
 <img src="figures/convnextsmall-tuned.PNG" width="500">
@@ -333,9 +332,7 @@ This will build an image from the [dockerfile](../Dockerfile) using python 3.10,
 The model is also deployed to an AWS Lambda function hosted by a docker image on AWS EC2. Run ``python test_cloud.py`` to run inference on the cloud model instead. It also also expected to return the dog breed for the example image, 'Redbone'
 
 
-
-
-# 5. References
+# 4. References
 
 1. Chollet, François (2016). _“xception: Deep Learning with Depthwise Separable Convolutions”_. In: CoRR abs/1610.02357. arXiv: 1610.02357. url: [http://
 arxiv.org/abs/1610.02357](http://arxiv.org/abs/1610.02357).
