@@ -1,7 +1,8 @@
-<img src="figures/header.jpg" style="display:block; margin:auto; width:55%; height:210px;">
+<img src="figures/header.jpg" style="display:block; margin:auto; width:75;">
 
 <br><br> 
 
+<div>
 <p style="text-align:center; background-color: darkgray; color: lightyellow; border-radius:10px; line-height:1.4; font-size:32px; font-weight:bold; padding: 9px;">
             <strong>Dog Breed Image Classification</strong>
 </p>  
@@ -11,6 +12,7 @@
     <br>Dog Breed Multi-Class Image Classification:
     <br>EDA, Transfer Learning, Fine-Tuning, and Model Deployment
 </p>
+</div>
 
 # 1. Introduction
 
@@ -43,24 +45,32 @@ The table of contents for the repository is as follows.
 - 1.2 - Table of contents **(We Are Here)**
 - 1.3 - Repository structure
 - 1.4 - Dataset source and information.
-### 2. Environment Installation
-- Instructions for creating and running the conda environment, including tensorflow installation.
-### 3. Modeling
-- 3.1 - xception
-- 3.2 - InceptionResNetV2
-- 3.3 - EfficientNetB3
-- 3.4 - ConvNeXtSmall
-- 3.5 - Comparison and analysis of all four tuned models to determine the final model: EfficientNetB3V2
-### 4. Deployment
-- 4.1 - Local deployment with docker
-- 4.2 - Cloud deployment with AWS Lambda and Streamlit
+### 2. Prerequisites
+- 2.1 - Software
+- 2.2 - Clone the repository
+- 2.3 - Download data
+- 2.4 - Local conda environment setup, including tensorflow installation.
+### 3. Directions
+- 3.1 - Notebook
+    - EDA
+    - Tune Xception, InceptionResNetV2, EfficientNetB3, ConvNeXtSmall
+    - Comparison and analysis of all four tuned models to determine the final model: EfficientNetB3V2
+    - Save to EfficientNetB3 TFLite
+- 3.3 - Local deployment with Docker
+    - Model prediction with lambda_function.py
+    - Test with test.py
+- 3.4 - Cloud deployment with AWS Lambda
+    - Model prediction with lambda_function.py
+    - Test with test_cloud.py
+### 4. Models
+
 ### 5. References
 - References for all model architectures and Keras documentation
 
 
 ## 1.3 Repository Structure
 
-The following details the files stored int his repository. Note that the inception and convnext models are excluded due to large file size.
+The following details the files stored in this repository. Note that the inception and convnext models were excluded due to large file size.
 
 
 ```
@@ -69,7 +79,7 @@ dog-prediction
 |   Dockerfile - Set up environment with minimized dependencies for local and cloud deployment
 │   requirements.txt - Set up local environment for running notebook
 │
-└───data - Contains images organized by folder for each class (dog breed)
+└───data - Unzip the dataset to this folder (section 2.3)
 │   
 └───figures - Contains images for the notebook and readme
 |
@@ -78,11 +88,11 @@ dog-prediction
 |   │   Xception_model.keras
 |   │   model.tflite - Minimized dependencies for local and cloud deployment
 |
-|
 └───python
     │   convnext.py - Hotfix for saving convnext models with tensorflow 2.10
     │   lambda_function.py - Function for AWS Lambda cloud deployment
-    │   notebook.ipynb - EDA, modeling and hyperparameter tuning
+    │   notebook.ipynb - EDA, modeling and hyperparameter tuning - training output removed
+    │   notebook_orig.ipynb - EDA, modeling and hyperparameter tuning - training output kept
     │   test.py - Tests local inference
     │   test_cloud.py - Tests cloud inference
 ```
@@ -96,7 +106,43 @@ The Stanford Dogs dataset contain images of dogs from around the world. It is pr
 
 Further observation of the data can be found in section 3.2 EDA
 
-# 2. Environment Installation
+# 2. Prerequisites
+
+## 2.1 - Prerequisite software
+
+### Prerequisite software
+```
+- Docker
+    - [Official installation documentation](https://docs.docker.com/engine/install/) for Docker Engine.
+- Anaconda or Miniconda
+    - [Official installation documentation](https://docs.anaconda.com/free/anaconda/install/index.html). Install with CLI tools.
+- Python 3.10
+    - This should be installed with the environment setup, but note the [official python download page](https://www.python.org/downloads/) for reference.
+- Tensorflow 2.10
+    - This should be installed with the environment setup, but installation instructions could vary depending on OS. Please refer to the [official documentation](https://www.tensorflow.org/install/pip) for your machine.
+```
+
+### 2.2 - Clone the repository
+```
+git clone https://github.com/PriyaVellanki/flower_classification.git
+```
+
+## 2.3 - Data download
+
+Download the dataset from [Kaggle - Stanford Dogs Dataset](https://www.kaggle.com/datasets/jessicali9530/stanford-dogs-dataset). Extract the contents of the zip file to the ``data`` folder. Ensure that the folder structure is as follows before proceeding.
+
+```
+data
+│
+└───annotations
+│   │
+│   └──── Annotation
+└───images
+    │
+    └──── Images
+```
+
+## 2.4 - Local conda environment setup, including tensorflow installation.
 
 ### Creating conda environment from requirements.txt
 
@@ -123,22 +169,78 @@ Alternatively, you can run the following command to create the environment dog-p
 ``conda env create --file environment.yml``
 
 
-# 3. Modeling
+# 3. Directions
+
+## 3.1 - Notebook
+
+The EDA, data preparation, model tuning and comparison were completed in the project notebook. A condensed notebook with outputs for training modules are cleared for enhanced readability is stored [here](python\notebook.ipynb). A notebook with training outputs is stored [here](python\notebook-orig.ipynb). The prerequisites from the previous section should prepare you to follow along with the notebook.
+
+### EDA
+
+To explore the data, we first looked at the full list of classes, or dog breeds, stripped from the folder structure names.
+
+```
+List of categories =  ['Chihuahua', 'Japanese spaniel', 'Maltese dog', 'Pekinese', 'Shih tzu', 'Blenheim spaniel', 'Papillon', 'Toy terrier', 'Rhodesian ridgeback', 'Afghan hound', 'Basset', 'Beagle', 'Bloodhound', 'Bluetick', 'Black and tan coonhound', 'Walker hound', 'English foxhound', 'Redbone', 'Borzoi', 'Irish wolfhound', 'Italian greyhound', 'Whippet', 'Ibizan hound', 'Norwegian elkhound', 'Otterhound', 'Saluki', 'Scottish deerhound', 'Weimaraner', 'Staffordshire bullterrier', 'American staffordshire terrier', 'Bedlington terrier', 'Border terrier', 'Kerry blue terrier', 'Irish terrier', 'Norfolk terrier', 'Norwich terrier', 'Yorkshire terrier', 'Wire haired fox terrier', 'Lakeland terrier', 'Sealyham terrier', 'Airedale', 'Cairn', 'Australian terrier', 'Dandie dinmont', 'Boston bull', 'Miniature schnauzer', 'Giant schnauzer', 'Standard schnauzer', 'Scotch terrier', 'Tibetan terrier', 'Silky terrier', 'Soft coated wheaten terrier', 'West highland white terrier', 'Lhasa', 'Flat coated retriever', 'Curly coated retriever', 'Golden retriever', 'Labrador retriever', 'Chesapeake bay retriever', 'German short haired pointer', 'Vizsla', 'English setter', 'Irish setter', 'Gordon setter', 'Brittany spaniel', 'Clumber', 'English springer', 'Welsh springer spaniel', 'Cocker spaniel', 'Sussex spaniel', 'Irish water spaniel', 'Kuvasz', 'Schipperke', 'Groenendael', 'Malinois', 'Briard', 'Kelpie', 'Komondor', 'Old english sheepdog', 'Shetland sheepdog', 'Collie', 'Border collie', 'Bouvier des flandres', 'Rottweiler', 'German shepherd', 'Doberman', 'Miniature pinscher', 'Greater swiss mountain dog', 'Bernese mountain dog', 'Appenzeller', 'Entlebucher', 'Boxer', 'Bull mastiff', 'Tibetan mastiff', 'French bulldog', 'Great dane', 'Saint bernard', 'Eskimo dog', 'Malamute', 'Siberian husky', 'Affenpinscher', 'Basenji', 'Pug', 'Leonberg', 'Newfoundland', 'Great pyrenees', 'Samoyed', 'Pomeranian', 'Chow', 'Keeshond', 'Brabancon griffon', 'Pembroke', 'Cardigan', 'Toy poodle', 'Miniature poodle', 'Standard poodle', 'Mexican hairless', 'Dingo', 'Dhole', 'African hunting dog'] 
+```
+
+We computed metrics for the maximum, minimum and mean number of images within a class, the kurtosis and skew of the classes within the dataset. The dataset is highly skewed, with a skewness > 1, and platykurtic with a kurtosis < 3.
+
+```
+Max counts: 166
+Min counts: 88
+Mean counts: 109.758
+Kurtosis: 0.788
+Skew: 1.0138674098824882
+Top 5 breeds: ['Afghan hound' 'Maltese dog' 'Scottish deerhound' 'Shih tzu' 'Samoyed']
+Bottom 5 breeds: ['French bulldog' 'Doberman' 'Brittany spaniel' 'Welsh springer spaniel'
+ 'Bouvier des flandres']
+```
+
+A barchart showing the distribution over all classes. The maximum limit has been marked with a bold line, the minimum limit with a dashed line. We can see a large distribution between classes.
+
+<img src="figures/eda1.PNG">
+
+The top 5 and bottom 5 classes by number of images. Examples for both groups are shown in the notebook, with the top 5 shown below.
+
+<img src="figures/eda2.PNG">
 
 
-## 3.1 - Xception
+### Modeling
 
-**Reference**
-- [xception: Deep Learning with Depthwise Separable Convolutions](https://arxiv.org/abs/1610.02357)
+The models Xception, InceptionResNetV2, EfficientNetB3V2 and ConvNeXtSmall were chosen for their small number of parameters and comparable performance metrics. We used transfer learning to tune each keras models with pre-trained weights from training on the ImageNet dataset. The function ``make_model`` in section 4.1 of the notebook has the following features:
+  - Takes any [keras application](https://keras.io/api/applications/) model as input and freezes the convolution layers and weights trained on ImageNet
+  - Adds a trainable pooling layer, trainable dense layer, trainable dropout layer and second dense layer after the base model
+  - Learning rate, inner layer size and dropout rate can be adjusted for hyperparameter tuning on these layers
 
-**Base Model Architecture**
+Before training, we split the dataset into training and test sets. The test set was held out for final performance calculations, and we tuned the model parameters using a once again separated training and validation set. The final split training/validation/testing split was 60/20/20. The notebook uses seeds for reproducibility of results.
 
-xception is "a deep convolutional neural network architecture inspired by Inception, where Inception modules have been replaced with depthwise separable convolutions". It outperforms Inception V3 on ImageNet while having the same number of parameters by making more efficient use of these model parameters. From figure 5 of the paper, the xception architecture: the data first goes through the entry flow, then through the middle flow which is repeated eight times, and finally through the exit flow. Note that all Convolution and SeparableConvolution layers are followed by batch normalization. All SeparableConvolution layers use a depth multiplier of 1 (no depth expansion).
+For each model, we used validation curves to tune within the following parameter ranges:
+
+- Learning rate in [0.00001, 0.0001, 0.001, 0.01, 0.1]
+- Inner layer size in [10, 50, 100, 250, 500, 1000]
+- Dropout rate in [0.25, 0.4, 0.5, 0.6, 0.75]
+
+We then unfroze the first 4 layers and re-trained the model with the best performing hyperparameters on the held-out test set. Each of the best performing models are compared in the following notebook section.
+
+
+**Xception**
+
+- Reference: [xception: Deep Learning with Depthwise Separable Convolutions](https://arxiv.org/abs/1610.02357)
+
+Xception is "a deep convolutional neural network architecture inspired by Inception, where Inception modules have been replaced with depthwise separable convolutions". It outperforms Inception V3 on ImageNet while having the same number of parameters by making more efficient use of these model parameters. From figure 5 of the paper, the xception architecture: the data first goes through the entry flow, then through the middle flow which is repeated eight times, and finally through the exit flow. Note that all Convolution and SeparableConvolution layers are followed by batch normalization. All SeparableConvolution layers use a depth multiplier of 1 (no depth expansion).
 
 <img src="figures/xception-architecture.PNG" width="700">
 
+The tuned parameter values and performance metrics can be seen below.
 
-## 3.2 - InceptionResNetV2
+Learning rate| Inner layer size | Dropout rate | Test accuracy | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+0.0001 | 100 | 0.4 | 13 | 0.901 | 0.898 | 0.900 | 0.897
+
+<img src="figures/xception-tuned.PNG" width="500">
+
+
+**InceptionResNetV2**
 
 [InceptionResNetV2 Application - Keras](https://keras.io/api/applications/inceptionresnetv2/)
 
@@ -151,8 +253,15 @@ Figures 3-9 from [Inception-v4, Inception-ResNet and the Impact of Residual Conn
 
 <img src="figures/resnetv2-architecture.PNG" width="1000">
 
+The tuned parameter values and performance metrics can be seen below.
 
-## 3.3 - EfficientNetB3V2
+Learning rate| Inner layer size | Dropout rate | Test accuracy | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+0.0001 | 100 | 0.4 | 15 | 0.920 | 0.917 | 0.921 | 0.916
+
+<img src="figures/inception-tuned.PNG" width="500">
+
+### EfficientNetB3V2
 
 [EfficientNetB3 Application - Keras](https://keras.io/api/applications/efficientnet/#efficientnetb3-function)
 
@@ -168,8 +277,16 @@ The EfficientNet baseline architecture leverages a multi-objective neural archit
 <img src="figures/efficientnetb3-table.PNG" width="350">
 <img src="figures/efficientnetb3-scaling.PNG" width="700">
 
+The tuned parameter values and performance metrics can be seen below.
 
-## 3.4 - ConvNeXtSmall
+Learning rate| Inner layer size | Dropout rate | Test accuracy | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+0.0001 | 250 | 0.6 | 18 | 0.920 | 0.917 | 0.921 | 0.916
+
+<img src="figures/efficientnet-tuned.PNG" width="500">
+
+
+### ConvNeXtSmall
 
 [ConvNeXtSmall Application - Keras](https://keras.io/api/applications/convnext/#convnextsmall-function)
 
@@ -182,17 +299,27 @@ ConvNeXt is a family of architectures that aims to make transformers viable for 
 
 <img src="figures/convnextsmall-table.PNG" width="500">
 
+The tuned parameter values and performance metrics can be seen below.
 
-## 3.5 - Compare all models
+Learning rate| Inner layer size | Dropout rate | Test accuracy | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+0.0001 | 250 | 0.6 | 18 | 0.945 | 0.944 | 0.945 | 0.944
 
-The following table compiles performance metrics for all four trained models. EfficientNetB3V2 is our best performing model across all metrics. It also has the smallest size and a relatively small number of parameters, so we can assume it will run fairly fast.
-
-<img src="figures/performance.PNG">
+<img src="figures/convnextsmall-tuned.PNG" width="500">
 
 
-# 4 Deployment
+### - Compare all models
 
-## 4.1 - Local Deployment
+The following table compiles performance metrics for all four trained models. EfficientNetB3V2 was our best performing model across all metrics. It also has the smallest size and a relatively small number of parameters, so we can assume it will run fairly fast.
+
+Model | Size | Parameters (k) | Train Time (s) | Inference Time (s) | Test precision | Test recall | Test f1
+--- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+Xception | 82.333 | 21078 | 70.203 | 12.696 | 0.901 | 0.898 | 0.900 | 0.897
+InceptionV2 | 210.371 | 11198 | 100.762 | 24.258 | 0.920 | 0.917 | 0.921 | 0.916
+EfficientNetB3V2 | 54.715 | 13344 | 66.558 | 13.107 | 0.945 | 0.944 | 0.945 | 0.944
+ConvNeXtSmall | 191.716 | 49677 | 265.549 | 160.441 | 0.939 | 0.938 | 0.940 | 0.937
+
+## 3.2 - Local Deployment
 
 To deploy locally, navigate up to the root folder and run the following from a terminal or command prompt. Please note that docker must already be installed on your local machine. See the [official documentation](https://docs.docker.com/engine/install/) for Docker Engine installation.
 
@@ -201,9 +328,11 @@ To deploy locally, navigate up to the root folder and run the following from a t
 
 This will build an image from the [dockerfile](../Dockerfile) using python 3.10, tflite and [lambda_function.py](lambda_function.py). Once the container is running, a test can be run from the python folder with the command ``python test.py``. It is expected to return 'Redbone'.
 
-## 4.2 - Cloud Deployment
+## 3.3 - Cloud Deployment
 
 The model is also deployed to an AWS Lambda function hosted by a docker image on AWS EC2. Run ``python test_cloud.py`` to run inference on the cloud model instead. It also also expected to return the dog breed for the example image, 'Redbone'
+
+
 
 
 # 5. References
