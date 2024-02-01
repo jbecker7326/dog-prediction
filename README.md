@@ -17,7 +17,7 @@
 
 # 1. Introduction
 
-## 1.1 Background
+## Background
 
 In recent years, the canine population has witnessed a surge in the number of mixed-breed dogs. While the charm of mixed-breed dogs lies in their one-of-a-kind characteristics, the increasing variety poses challenges when it comes to identifying their specific breeds. This is where a classification model proves to be invaluable.
 
@@ -37,42 +37,39 @@ Finally, we'll save the best model with tensorflow lite, create a docker image f
 
 **WARNING**: Do not attempt to run the enitre notebook without a CUDA-enabled GPU. The models may take hours or even days to train. See section 3.2 for more information on how to check for an available GPU.
 
-## 1.2 Table of Contents.
+## Table of Contents.
 
 The table of contents for the repository is as follows.
 
 ### 1. Introduction
-- 1.1 - Description of the project methodology and real world use-case.
-- 1.2 - Table of contents **(We Are Here)**
-- 1.3 - Repository structure
-- 1.4 - Dataset source and information.
+- Description of the project methodology and real world use-case.
+- Table of contents **(We Are Here)**
+- Repository structure
+- Dataset source and information.
 ### 2. Prerequisites
-- 2.1 - Software
-- 2.2 - Clone the repository
-- 2.3 - Download data
-- 2.4 - Local conda environment setup, including tensorflow installation.
-### 3. Directions
-- 3.1 - Notebook
-    - EDA
-    - Tune Xception, InceptionResNetV2, EfficientNetB3, ConvNeXtSmall
-    - Comparison and analysis of all four tuned models to determine the final model: EfficientNetB3V2
-    - Save to EfficientNetB3 TFLite
-- 3.3 - Local deployment with Docker
-    - Test with test.py
+- Software
+- Clone the repository
+- Download data
+- Local conda environment setup, including tensorflow installation.
+### 3. Analysis
+- EDA
+- Tune Xception, InceptionResNetV2, EfficientNetB3, ConvNeXtSmall
+- Comparison and analysis of all four tuned models to determine the final model: EfficientNetB3V2
+### 4. Deployment
+- Local deployment with Docker
+    - Test with test.py -t local
     - Model prediction with lambda_function.py
-- 3.4 - Cloud deployment with AWS Lambda
-    - Test with test_cloud.py
+- Cloud deployment with AWS Lambda
+    - Test with test.py -t cloud
     - Model prediction with lambda_function.py
-- 3.5 - Application deployment with Streamlit
+- Application deployment with Streamlit
     - Local deployment for testing
     - Model prediction with streamlit_app.py
-
-
-### 4. References
+### 5. References
 - References for all model architectures and Keras documentation
 
 
-## 1.3 Repository Structure
+## Repository Structure
 
 The following details the files stored in this repository. Note that the inception and convnext models were excluded due to large file size.
 
@@ -102,7 +99,7 @@ dog-prediction
     │   streamlit_app.py - Application for streamlit cloud
 ```
 
-## 1.4 Dataset Source
+## Dataset Source
 
 The Stanford Dogs dataset contain images of dogs from around the world. It is primarily used for image categorization of dog breeds. The version for this project can be downloaded from [Kaggle - Stanford Dogs Dataset](https://www.kaggle.com/datasets/jessicali9530/stanford-dogs-dataset).
 - Dog breeds: 120
@@ -113,9 +110,8 @@ Further observation of the data can be found in section 3.2 EDA
 
 # 2. Prerequisites
 
-## 2.1 - Prerequisite software
+## Software
 
-### Prerequisite software
 ```
 - Docker
     - [Official installation documentation](https://docs.docker.com/engine/install/) for Docker Engine.
@@ -127,12 +123,12 @@ Further observation of the data can be found in section 3.2 EDA
     - This should be installed with the environment setup, but installation instructions could vary depending on OS. Please refer to the [official documentation](https://www.tensorflow.org/install/pip) for your machine.
 ```
 
-### 2.2 - Clone the repository
+## Clone the repository
 ```
 git clone https://github.com/PriyaVellanki/flower_classification.git
 ```
 
-## 2.3 - Data download
+## Data download
 
 Download the dataset from [Kaggle - Stanford Dogs Dataset](https://www.kaggle.com/datasets/jessicali9530/stanford-dogs-dataset). Extract the contents of the zip file to the ``data`` folder. Ensure that the folder structure is as follows before proceeding.
 
@@ -147,9 +143,7 @@ data
     └──── Images
 ```
 
-## 2.4 - Local conda environment setup, including tensorflow installation.
-
-### Creating conda environment from requirements.txt
+## Local conda environment setup, including tensorflow installation.
 
 The following will create a conda environment with the necessary requirements for this project.
 
@@ -170,11 +164,9 @@ For a windows build with a cuda-enabled nvidia graphics card, please run the fol
 
 # 3. Directions
 
-## 3.1 - Notebook
-
 The EDA, data preparation, model tuning and comparison were completed in the project notebook. A condensed notebook with outputs for training modules are cleared for enhanced readability is stored [here](python\notebook.ipynb). A notebook with training outputs is stored [here](python\notebook-orig.ipynb). The prerequisites from the previous section should prepare you to follow along with the notebook.
 
-### EDA
+## EDA
 
 To explore the data, we first looked at the full list of classes, or dog breeds, stripped from the folder structure names.
 
@@ -204,7 +196,7 @@ The top 5 and bottom 5 classes by number of images. Examples for both groups are
 <img src="figures/eda2.PNG">
 
 
-### Modeling
+## Modeling
 
 The models Xception, InceptionResNetV2, EfficientNetB3V2 and ConvNeXtSmall were chosen for their small number of parameters and comparable performance metrics. We used transfer learning to tune each keras models with pre-trained weights from training on the ImageNet dataset. The function ``make_model`` in section 4.1 of the notebook has the following features:
   - Takes any [keras application](https://keras.io/api/applications/) model as input and freezes the convolution layers and weights trained on ImageNet
@@ -291,7 +283,7 @@ Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test p
 <img src="figures/convnextsmall-tuned.PNG" width="500">
 
 
-### Compare all models
+## Compare all models
 
 The following table compiles performance metrics for all four trained models. EfficientNetB3V2 was our best performing model across all metrics. It also has the smallest size and a relatively small number of parameters, so we can assume it will run fairly fast. It was converted to tflite and saved to [model.tflite](models/model.tflite) for efficient performance during deployment.
 
@@ -303,33 +295,49 @@ EfficientNetB3V2 | 54.715 | 13344 | 66.558 | 13.107 | 0.945 | 0.944 | 0.945 | 0.
 ConvNeXtSmall | 191.716 | 49677 | 265.549 | 160.441 | 0.939 | 0.938 | 0.940 | 0.937
 
 
-## 3.2 - Local Deployment
+# 4. Deployment
+## Local Deployment
 
 To deploy locally, navigate up to the root folder and run the following from a terminal or command prompt. Please note that docker must already be installed on your local machine. See the [official documentation](https://docs.docker.com/engine/install/) for Docker Engine installation.
 
 - Build the container: `docker build -t dog-prediction .`
-- Run the container: `docker run -it -rm -p 8080:8080 clothing-model:latest`
+- Run the container: `docker run -it --rm -p 8080:8080 dog-prediction:latest`
 
-This will build an image from the [dockerfile](../Dockerfile) using python 3.10, tflite and [lambda_function.py](lambda_function.py). Once the container is running, a test can be run from the python folder with the command ``python test.py``. It is expected to return 'Redbone'.
+This will build an image from the [dockerfile](../Dockerfile) using python 3.10, tflite and [lambda_function.py](lambda_function.py). Once the container is running, a test can be run from the python folder with the following command:
 
-## 3.3 - Cloud Deployment
+```
+python python/test.py -t local
+```
 
-The model is also deployed to an AWS Lambda function running with a docker image hosted on AWS EC2. Run ``python test_cloud.py`` to run inference on the cloud model instead. It also also expected to return the dog breed for the example image, 'Redbone'
+It should return the following response with the top 5 dog breeds ascending order, each followed by the corresponding model score.
 
-## 3.4 - Application Deployment
+```
+[['Golden retriever', 4.919923782348633], ['Kuvasz', 1.704105019569397], ['Great pyrenees', 0.6640735268592834], ['Labrador retriever', -0.6828881502151489], ['Border collie', -0.9368569254875183]]
+```
 
-The model is also deployed to an interactive application hosted by Streamlit. Run ``streamlit run python/streamlit_app.py`` to test it locally, or go to [https://dog-prediction.streamlit.app/](https://dog-prediction.streamlit.app/) to use the deployed application.
+## Cloud Deployment
 
-- Drag or drop a file to the file input widget
-- Click predict
-- Results show top 5 matched breeds for your image
+The model is also hosted on an AWS Lambda function with a docker image hosted on AWS ECR. To run inference on the cloud, run the following. It is expected to return the same response as for the locally deployed image.
+
+```
+python python/test.py -t cloud
+```
+
+## Application Deployment
+
+The model is also deployed to an interactive application hosted by Streamlit. The application performs inference using the cloud-deployed model. Run ``streamlit run python/streamlit_app.py`` to test it locally, or go to [https://dog-prediction.streamlit.app/](https://dog-prediction.streamlit.app/) to use the deployed application.
+
+- Click 'Browse files' to upload an image.
+- Click 'Predict' to post to the cloud.
+- While the image is being processed, you should see a status wheel.
+- Once it has completed, the application will output a table with the top 5 dog breeds and model scores.
 
 See below for an example:
 
 <img src="figures/app.PNG">
 
 
-# 4. References
+# 5. References
 
 1. Chollet, François (2016). _“xception: Deep Learning with Depthwise Separable Convolutions”_. In: CoRR abs/1610.02357. arXiv: 1610.02357. url: [http://
 arxiv.org/abs/1610.02357](http://arxiv.org/abs/1610.02357).

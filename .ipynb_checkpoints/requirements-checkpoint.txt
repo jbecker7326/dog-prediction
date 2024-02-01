@@ -1,9 +1,0 @@
-tensorflow-gpu==2.10.0
-jupyterlab
-scipy
-scikit-learn
-session-info
-matplotlib
-polars
-awscli
-streamlit
