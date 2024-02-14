@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  dog-model:
+    image: dog-prediction-model:v1
+  gateway:
+    image: dog-prediction-gateway:v1
+    environment:
+      - TF_SERVING_HOST=dog-model:8500
+    ports:
+      - "9696:9696"

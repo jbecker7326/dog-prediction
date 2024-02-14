@@ -7,3 +7,6 @@ matplotlib
 polars
 awscli
 streamlit
+keras-image-helper
+grpcio==1.42.0
+tensorflow-serving-api==2.7.0
