@@ -55,13 +55,19 @@ The table of contents for the repository is as follows.
 - EDA
 - Tune Xception, InceptionResNetV2, EfficientNetB3, ConvNeXtSmall
 - Comparison and analysis of all four tuned models to determine the final model: EfficientNetB3V2
-### 4. Deployment
+### 4. Serverless AWS Deployment
 - Local deployment with Docker
     - Test with test.py -t local
     - Model prediction with lambda_function.py
 - Cloud deployment with AWS Lambda
     - Test with test.py -t cloud
     - Model prediction with lambda_function.py
+### 5. Kubernetes Deployment
+- Local deployment with Docker
+    - Test local tf-serving model with kubernetes/test.py -t serving
+    - Test local gateway with kubernetes/test.py -t gateway
+    - Model prediction with proto.py and gateway.py
+### 6. Application Deployment
 - Application deployment with Streamlit
     - Local deployment for testing
     - Model prediction with streamlit_app.py
@@ -87,16 +93,26 @@ dog-prediction
 └───models
 |   │   effnetV2B3_model.keras
 |   │   Xception_model.keras
-|   │   model.tflite - Minimized dependencies for local and cloud deployment
+|   │   model.tflite - Tflite model with minimized dependencies for serverless deployment
+|   │   converted_model - Tensorflow model for kubernetes deployment with tf-serving
 |
 └───python
-    │   convnext.py - Hotfix for saving convnext models with tensorflow 2.10
-    │   lambda_function.py - Function for AWS Lambda cloud deployment
-    │   notebook.ipynb - EDA, modeling and hyperparameter tuning - training output removed
-    │   notebook_orig.ipynb - EDA, modeling and hyperparameter tuning - training output kept
-    │   test.py - Tests local inference
-    │   test_cloud.py - Tests cloud inference
-    │   streamlit_app.py - Application for streamlit cloud
+|   │   convnext.py - Hotfix for saving convnext models with tensorflow 2.10
+|   │   lambda_function.py - Function for AWS Lambda cloud deployment
+|   │   notebook.ipynb - EDA, modeling and hyperparameter tuning - training output removed
+|   │   notebook-orig.ipynb - EDA, modeling and hyperparameter tuning - training output kept
+|   │   test.py - Tests serverless local and cloud inference
+|   │   streamlit_app.py - Application for streamlit cloud
+|
+└───kubernetes
+    │   docker-compose.yaml - Docker Compose file for setting up multi-container network
+    │   image-gateway.dockerfile - Dockerfile for running gateway container to post predictions to the model
+    │   image-model.dockerfile - Dockerfile for running model container to accept posts for predictions
+    │   Pipfile - Pipfile for building gateway container environment
+    │   Pipfile.lock - Pipfile lock for building gateway container environment
+    │   gateway.py - Flask application that connects to tf-serving model
+    │   proto.py - Converts model to proto for efficient deployment and inference
+    │   test.py - Tests kubernetes local and cloud inference
 ```
 
 ## Dataset Source
@@ -295,10 +311,10 @@ EfficientNetB3V2 | 54.715 | 13344 | 66.558 | 13.107 | 0.945 | 0.944 | 0.945 | 0.
 ConvNeXtSmall | 191.716 | 49677 | 265.549 | 160.441 | 0.939 | 0.938 | 0.940 | 0.937
 
 
-# 4. Deployment
+# 4. Serverless AWS Deployment
 ## Local Deployment
 
-To deploy locally, navigate up to the root folder and run the following from a terminal or command prompt. Please note that docker must already be installed on your local machine. See the [official documentation](https://docs.docker.com/engine/install/) for Docker Engine installation.
+To deploy locally, navigate up to the root folder and run the following from a terminal or command prompt. Please note that docker must already be installed and running on your local machine. See the [official documentation](https://docs.docker.com/engine/install/) for Docker Engine installation.
 
 - Build the container: `docker build -t dog-prediction .`
 - Run the container: `docker run -it --rm -p 8080:8080 dog-prediction:latest`
@@ -323,7 +339,55 @@ The model is also hosted on an AWS Lambda function with a docker image hosted on
 python python/test.py -t cloud
 ```
 
-## Application Deployment
+# 5. Kubernetes Deployment
+## Docker
+To test our kubernetes deployment for the cloud, we first set up a multi-container environment with docker-compose. Model was resaved with tensorflow format to [model_converted](models/model_converted).
+
+### Docker serving
+A simple dockerfile is set up for to run a container with tf-serving. 
+- Saved to [image-model.dockerfile](kubernetes/image-model.dockerfile).
+
+First navigate to the root and build then run the container with the following commands. Test it to ensure that the setup is working as intended, and you should recieve that same predictions as shown section 4 for serverless deployment.
+
+**Build**
+> docker build -t dog-prediction-model:v1 -f kubernetes/image-model.dockerfile .
+
+**Run**
+> docker run -it --rm -p 8500:8500 dog-prediction-model:v1
+
+**Test**
+> python kubernetes/test.py -t serving
+
+### Docker gateway
+Another dockerfile is set up to run a container for the gateway with a flask application that points to the previous container at port 8500. 
+- Saved to [image-gateway.dockerfile](../kubernetes/image-gateway.dockerfile).
+- Builds the environment with [Pipfile](kubernetes/Pipfile) and [Pipfile.lock](kubernetes/Pipfile.lock)
+- Uses the python files [gateway.py](kubernetes/gateway.py) and [proto.py](kubernetes/proto.py) for prediction
+
+We only want to build this container, because it cannot run without a connection to port 8500. This connection will be addressed in the next step.
+
+**Build**
+
+> docker build -t dog-prediction-gateway:v1 -f kubernetes/image-gateway.dockerfile .
+
+### Docker compose
+To connect the gateway (port 9696) to the serving model (port 8500), start a virtual network using docker-compose.
+- The docker compose file is saved to [docker-compose.yaml](kubernetes/docker-compose.yaml).
+
+First, **navigate to the kubernetes folder** then run docker-compose. Follow by testing to ensure the predictions are as expected, then shut down the stack.
+
+**Run**
+> docker-compose up
+
+**Test**
+> python kubernetes/test.py -t serving
+
+**Shut Down**
+> docker-compose down
+
+
+
+## 6. Application Deployment
 
 The model is also deployed to an interactive application hosted by Streamlit. The application performs inference using the cloud-deployed model. Run ``streamlit run python/streamlit_app.py`` to test it locally, or go to [https://dog-prediction.streamlit.app/](https://dog-prediction.streamlit.app/) to use the deployed application.
 
@@ -337,7 +401,7 @@ See below for an example:
 <img src="figures/app.PNG">
 
 
-# 5. References
+# 7. References
 
 1. Chollet, François (2016). _“xception: Deep Learning with Depthwise Separable Convolutions”_. In: CoRR abs/1610.02357. arXiv: 1610.02357. url: [http://
 arxiv.org/abs/1610.02357](http://arxiv.org/abs/1610.02357).
