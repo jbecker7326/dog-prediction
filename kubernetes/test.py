@@ -16,7 +16,7 @@ from proto import np_to_protobuf
 
 
 parser = ArgumentParser()
-parser.add_argument("-t", "--test", choices=['serving', 'gateway', 'cloud'], required=True,help="test type local or cloud")
+parser.add_argument("-t", "--test", choices=['serving', 'gateway', 'kube', 'eks', 'lambda'], required=True,help="test type local or cloud")
 args = parser.parse_args()
 
 def download_image(url):
@@ -43,34 +43,43 @@ def main():
     classes = ['Chihuahua', 'Japanese spaniel', 'Maltese dog', 'Pekinese', 'Shih tzu', 'Blenheim spaniel', 'Papillon', 'Toy terrier', 'Rhodesian ridgeback', 'Afghan hound', 'Basset', 'Beagle', 'Bloodhound', 'Bluetick', 'Black and tan coonhound', 'Walker hound', 'English foxhound', 'Redbone', 'Borzoi', 'Irish wolfhound', 'Italian greyhound', 'Whippet', 'Ibizan hound', 'Norwegian elkhound', 'Otterhound', 'Saluki', 'Scottish deerhound', 'Weimaraner', 'Staffordshire bullterrier', 'American staffordshire terrier', 'Bedlington terrier', 'Border terrier', 'Kerry blue terrier', 'Irish terrier', 'Norfolk terrier', 'Norwich terrier', 'Yorkshire terrier', 'Wire haired fox terrier', 'Lakeland terrier', 'Sealyham terrier', 'Airedale', 'Cairn', 'Australian terrier', 'Dandie dinmont', 'Boston bull', 'Miniature schnauzer', 'Giant schnauzer', 'Standard schnauzer', 'Scotch terrier', 'Tibetan terrier', 'Silky terrier', 'Soft coated wheaten terrier', 'West highland white terrier', 'Lhasa', 'Flat coated retriever', 'Curly coated retriever', 'Golden retriever', 'Labrador retriever', 'Chesapeake bay retriever', 'German short haired pointer', 'Vizsla', 'English setter', 'Irish setter', 'Gordon setter', 'Brittany spaniel', 'Clumber', 'English springer', 'Welsh springer spaniel', 'Cocker spaniel', 'Sussex spaniel', 'Irish water spaniel', 'Kuvasz', 'Schipperke', 'Groenendael', 'Malinois', 'Briard', 'Kelpie', 'Komondor', 'Old english sheepdog', 'Shetland sheepdog', 'Collie', 'Border collie', 'Bouvier des flandres', 'Rottweiler', 'German shepherd', 'Doberman', 'Miniature pinscher', 'Greater swiss mountain dog', 'Bernese mountain dog', 'Appenzeller', 'Entlebucher', 'Boxer', 'Bull mastiff', 'Tibetan mastiff', 'French bulldog', 'Great dane', 'Saint bernard', 'Eskimo dog', 'Malamute', 'Siberian husky', 'Affenpinscher', 'Basenji', 'Pug', 'Leonberg', 'Newfoundland', 'Great pyrenees', 'Samoyed', 'Pomeranian', 'Chow', 'Keeshond', 'Brabancon griffon', 'Pembroke', 'Cardigan', 'Toy poodle', 'Miniature poodle', 'Standard poodle', 'Mexican hairless', 'Dingo', 'Dhole', 'African hunting dog']
     image_url = "https://upload.wikimedia.org/wikipedia/commons/4/4b/Golden_retriever_running_on_a_dirt_road.jpg"
 
-    img = download_image(image_url)
-    X = batch_image(img)
-
     if args.test == "serving":
         url = 'localhost:8500'
+
+        channel = grpc.insecure_channel(url)
+        stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+
+        pb_request = predict_pb2.PredictRequest()
+        pb_request.model_spec.name = 'converted_model'
+        pb_request.model_spec.signature_name = 'serving_default'
+
+        img = download_image(image_url)
+        X = batch_image(img)
+        pb_request.inputs['input_35'].CopyFrom(np_to_protobuf(X))
+        
+        pb_response = stub.Predict(pb_request, timeout=20.0)
+        preds = pb_response.outputs['dense_65'].float_val
+
+        dict_predictions = dict(zip(classes, preds))
+        top_5 = sorted(dict_predictions.items(), key=lambda x:x[1], reverse=True)[:5]
+        print(top_5)
+        return
     elif args.test == "gateway":
         url = 'http://localhost:9696/predict'
         data = {'url': image_url}
         result = requests.post(url, json=data).json()
         print(result)
         return
-    else:
+    elif args.test == "kube":
+        url = 'http://localhost:8080/predict'
+        data = {'url': image_url}
+        result = requests.post(url, json=data).json()
+        print(result)
+        return
+    elif args.test == "lambda":
         url = "https://4bfnidjam6.execute-api.us-east-1.amazonaws.com/deploy-1/predict"    
+        return
 
-    channel = grpc.insecure_channel(url)
-    stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)
-
-    pb_request = predict_pb2.PredictRequest()
-    pb_request.model_spec.name = 'converted_model'
-    pb_request.model_spec.signature_name = 'serving_default'
-    pb_request.inputs['input_35'].CopyFrom(np_to_protobuf(X))
-    
-    pb_response = stub.Predict(pb_request, timeout=20.0)
-    preds = pb_response.outputs['dense_65'].float_val
-
-    dict_predictions = dict(zip(classes, preds))
-    top_5 = sorted(dict_predictions.items(), key=lambda x:x[1], reverse=True)[:5]
-    print(top_5)
 
 if __name__ == "__main__":
     main()

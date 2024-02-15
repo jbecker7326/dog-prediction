@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dog-prediction-gateway
+spec:
+  selector:
+    app: dog-prediction-gateway
+  ports:
+  - port: 80
+    targetPort: 9696

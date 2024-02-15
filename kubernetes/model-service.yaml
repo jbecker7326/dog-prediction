@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dog-prediction-model
+spec:
+  selector:
+    app: dog-prediction-model
+  ports:
+  - port: 8500
+    targetPort: 8500
