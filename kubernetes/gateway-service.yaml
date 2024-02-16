@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: dog-prediction-gateway
 spec:
+  type: LoadBalancer
   selector:
     app: dog-prediction-gateway
   ports:
