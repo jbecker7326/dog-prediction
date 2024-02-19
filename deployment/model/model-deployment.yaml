@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dog-prediction-model
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dog-prediction-model
+  template:
+    metadata:
+      labels:
+        app: dog-prediction-model
+    spec:
+      containers:
+      - name: dog-prediction-model
+        image: dog-prediction-model:v1
+        resources:
+          limits:
+            memory: "1000Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 8500
