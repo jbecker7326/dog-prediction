@@ -33,7 +33,10 @@ The following study explores the multi-class [stanford dogs image dataset](https
 - [EfficientNetB3](https://arxiv.org/abs/1905.11946)
 - [ConvNeXtSmall](https://arxiv.org/abs/2201.03545)
 
-Finally, we'll save the best model with tensorflow lite, create a docker image for the environment with minimized dependencies, deploy it to the cloud using AWS Lambda and with Streamlit.
+We saved the best model and deployed it two ways, with a front-end application hosted by streamlit.
+- **Serverless Deployment**: Save the best model with tensorflow lite, create a docker image for the environment with minimized dependencies, and deploy it to the cloud using AWS Lambda
+- **Kubernetes Deployment**: Convert the model to tensorflow format, set up a flask application, build docker images for them, and deploy the full application to AWS EKS. 
+- **Front-end Application**: Create a low-code front-end for our application using streamlit and connect it to the cloud-deployed AWS services.
 
 **WARNING**: Do not attempt to run the enitre notebook without a CUDA-enabled GPU. The models may take hours or even days to train. See section 3.2 for more information on how to check for an available GPU.
 
@@ -55,23 +58,15 @@ The table of contents for the repository is as follows.
 - EDA
 - Tune Xception, InceptionResNetV2, EfficientNetB3, ConvNeXtSmall
 - Comparison and analysis of all four tuned models to determine the final model: EfficientNetB3V2
-### 4. Serverless AWS Deployment
+### 4. Serverless Deployment
 - Local deployment with Docker
-    - Test with test.py -t local
-    - Model prediction with lambda_function.py
 - Cloud deployment with AWS Lambda
-    - Test with test.py -t cloud
-    - Model prediction with lambda_function.py
 ### 5. Kubernetes Deployment
 - Local deployment with Docker
-    - Test local tf-serving model with kubernetes/test.py -t serving
-    - Test local gateway with kubernetes/test.py -t gateway
-    - Model prediction with proto.py and gateway.py
+- Cloud deployment with AWS EKS
 ### 6. Application Deployment
 - Application deployment with Streamlit
-    - Local deployment for testing
-    - Model prediction with streamlit_app.py
-### 5. References
+### 7. References
 - References for all model architectures and Keras documentation
 
 
@@ -79,40 +74,49 @@ The table of contents for the repository is as follows.
 
 The following details the files stored in this repository. Note that the inception and convnext models were excluded due to large file size.
 
-
 ```
 dog-prediction
 │   README.md
-|   Dockerfile - Set up environment with minimized dependencies for local and cloud deployment
 │   requirements.txt - Set up local environment for running notebook
 │
 └───data - Unzip the dataset to this folder (section 2.3)
 │   
 └───figures - Contains images for the notebook and readme
-|
+│
 └───models
-|   │   effnetV2B3_model.keras
-|   │   Xception_model.keras
-|   │   model.tflite - Tflite model with minimized dependencies for serverless deployment
-|   │   converted_model - Tensorflow model for kubernetes deployment with tf-serving
-|
+│   │   effnetV2B3_model.keras
+│   │   Xception_model.keras
+│   │   model.tflite - Tflite model with minimized dependencies for serverless deployment
+│   │   converted_model - Tensorflow model for kubernetes deployment with tf-serving
+│
+└───notebooks
+│   │   modeling_notebook.ipynb - EDA, modeling and hyperparameter tuning
+│   │   deployment_notebook.ipynb - Local, AWS Lambda and AWS EKS deployment with docker, kubernetes and flask
+│   │   convnext.py - Hotfix for saving convnext models with tensorflow 2.10
+│
 └───python
-|   │   convnext.py - Hotfix for saving convnext models with tensorflow 2.10
-|   │   lambda_function.py - Function for AWS Lambda cloud deployment
-|   │   notebook.ipynb - EDA, modeling and hyperparameter tuning - training output removed
-|   │   notebook-orig.ipynb - EDA, modeling and hyperparameter tuning - training output kept
-|   │   test.py - Tests serverless local and cloud inference
-|   │   streamlit_app.py - Application for streamlit cloud
-|
-└───kubernetes
+│   │   gateway.py - Flask application that connects to tf-serving model
+│   │   lambda_function.py - Function for AWS Lambda cloud deployment
+│   │   proto.py - Converts model to proto for efficient deployment and inference
+│   │   streamlit_app.py - Application for streamlit cloud
+│   │   test.py - Tests local, serverless, and cloud kubernetes inference
+│
+└───deployment
     │   docker-compose.yaml - Docker Compose file for setting up multi-container network
-    │   image-gateway.dockerfile - Dockerfile for running gateway container to post predictions to the model
-    │   image-model.dockerfile - Dockerfile for running model container to accept posts for predictions
-    │   Pipfile - Pipfile for building gateway container environment
-    │   Pipfile.lock - Pipfile lock for building gateway container environment
-    │   gateway.py - Flask application that connects to tf-serving model
-    │   proto.py - Converts model to proto for efficient deployment and inference
-    │   test.py - Tests kubernetes local and cloud inference
+    │   eks-config.yaml - Configuration file for building EKS cluster
+    │   lambda.dockerfile - Docker environment with tflite for lambda deployment
+    │
+    └───gateway
+    │   │   gateway-deployment.yaml - Kubernetes file for deploying the gateway with flask
+    │   │   gateway-service.yaml - Kubernetes file for serving the gateway to the model (port 80 -> 9696) 
+    │   │   image-gateway.dockerfile - Dockerfile for running gateway container to post predictions to the model
+    │   │   Pipfile - Pipfile for building gateway container environment
+    │   │   Pipfile.lock - Pipfile lock for building gateway container environment
+    │
+    └───model
+        │   model-deployment.yaml - Kubernetes file for deploying the model with tensorflow-serving     
+        │   model-service.yaml - Kubernetes file for serving the model (port 8500) 
+        │   image-model.dockerfile - Dockerfile for running model container to accept posts for predictions
 ```
 
 ## Dataset Source
@@ -122,7 +126,7 @@ The Stanford Dogs dataset contain images of dogs from around the world. It is pr
 - Number of images: 20,580
 - This project uses the "Images" folder which is divided into subfolders by class (dog breed)
 
-Further observation of the data can be found in section 3.2 EDA
+Further observation of the data can be found in section 3 EDA
 
 # 2. Prerequisites
 
@@ -180,7 +184,8 @@ For a windows build with a cuda-enabled nvidia graphics card, please run the fol
 
 # 3. Directions
 
-The EDA, data preparation, model tuning and comparison were completed in the project notebook. A condensed notebook with outputs for training modules are cleared for enhanced readability is stored [here](python\notebook.ipynb). A notebook with training outputs is stored [here](python\notebook-orig.ipynb). The prerequisites from the previous section should prepare you to follow along with the notebook.
+The EDA, data preparation, model tuning and comparison were completed in the [modeling notebook](notebooks\modeling_notebook). 
+The prerequisites from the previous section should prepare you to follow along with the notebook.
 
 ## EDA
 
@@ -311,83 +316,82 @@ EfficientNetB3V2 | 54.715 | 13344 | 66.558 | 13.107 | 0.945 | 0.944 | 0.945 | 0.
 ConvNeXtSmall | 191.716 | 49677 | 265.549 | 160.441 | 0.939 | 0.938 | 0.940 | 0.937
 
 
-# 4. Serverless AWS Deployment
-## Local Deployment
+# 4. Serverless Deployment
+## Local
 
 To deploy locally, navigate up to the root folder and run the following from a terminal or command prompt. Please note that docker must already be installed and running on your local machine. See the [official documentation](https://docs.docker.com/engine/install/) for Docker Engine installation.
 
-- Build the container: `docker build -t dog-prediction .`
-- Run the container: `docker run -it --rm -p 8080:8080 dog-prediction:latest`
-
-This will build an image from the [dockerfile](../Dockerfile) using python 3.10, tflite and [lambda_function.py](lambda_function.py). Once the container is running, a test can be run from the python folder with the following command:
-
-```
-python python/test.py -t local
-```
-
-It should return the following response with the top 5 dog breeds ascending order, each followed by the corresponding model score.
-
-```
-[['Golden retriever', 4.919923782348633], ['Kuvasz', 1.704105019569397], ['Great pyrenees', 0.6640735268592834], ['Labrador retriever', -0.6828881502151489], ['Border collie', -0.9368569254875183]]
-```
-
-## Cloud Deployment
-
-The model is also hosted on an AWS Lambda function with a docker image hosted on AWS ECR. To run inference on the cloud, run the following. It is expected to return the same response as for the locally deployed image.
-
-```
-python python/test.py -t cloud
-```
-
-# 5. Kubernetes Deployment
-## Docker
-To test our kubernetes deployment for the cloud, we first set up a multi-container environment with docker-compose. Model was resaved with tensorflow format to [model_converted](models/model_converted).
-
-### Docker serving
-A simple dockerfile is set up for to run a container with tf-serving. 
-- Saved to [image-model.dockerfile](kubernetes/image-model.dockerfile).
-
-First navigate to the root and build then run the container with the following commands. Test it to ensure that the setup is working as intended, and you should recieve that same predictions as shown section 4 for serverless deployment.
+The following commands will build an image from the [dockerfile](deployment/lambda.dockerfile) using python 3.10, tflite and [lambda_function.py](python/lambda_function.py). Once the container is running, test it.
 
 **Build**
-> docker build -t dog-prediction-model:v1 -f kubernetes/image-model.dockerfile .
+> docker build -t dog-prediction -f deployment/lambda.dockerfile .
 
 **Run**
-> docker run -it --rm -p 8500:8500 dog-prediction-model:v1
+> docker run -it --rm -p 8080:8080 dog-prediction:latest
 
 **Test**
-> python kubernetes/test.py -t serving
+> python python/test.py -t local
 
-### Docker gateway
-Another dockerfile is set up to run a container for the gateway with a flask application that points to the previous container at port 8500. 
-- Saved to [image-gateway.dockerfile](../kubernetes/image-gateway.dockerfile).
-- Builds the environment with [Pipfile](kubernetes/Pipfile) and [Pipfile.lock](kubernetes/Pipfile.lock)
-- Uses the python files [gateway.py](kubernetes/gateway.py) and [proto.py](kubernetes/proto.py) for prediction
+It should return the following response with the top 5 dog breeds ascending order, each followed by the corresponding model score.
+```
+[['Golden retriever', 6.056427955627441], ['Great pyrenees', 2.281074285507202], ['Kuvasz', 1.2518045902252197], ['Labrador retriever', 0.1173974946141243], ['Flat coated retriever', -1.8855047225952148]]
+```
 
-We only want to build this container, because it cannot run without a connection to port 8500. This connection will be addressed in the next step.
+## AWS Lambda
+
+The model is hosted serverlessly on an AWS Lambda function with a docker image hosted on AWS ECR. 
+The steps for deploying the model to AWS Lambda are included in the [deployment notebook](notebooks/deployment_notebook), section 2.
+
+Run the following command to test the serverless model. It is expected to return the same response as for the locally deployed image.
+
+**Test**
+> python python/test.py -t lambda
+
+# 5. Kubernetes Deployment
+## Local
+To test our kubernetes deployment for the cloud, we first set up a multi-container environment with docker-compose. It references our best model saved to tensorflow format, stored in [model_converted](models/model_converted). 
+
+To locally connect the gateway (port 9696) to the serving model (port 8500), spin up a virtual network using docker-compose.
+- The docker compose file is saved to [docker-compose.yaml](deployment/docker-compose.yaml).
+
+Build the images from the root folder, then **navigate to the deployment folder** then and run docker-compose. Follow by testing to ensure the returned predictions are as expected, then shut down the stack.
 
 **Build**
-
-> docker build -t dog-prediction-gateway:v1 -f kubernetes/image-gateway.dockerfile .
-
-### Docker compose
-To connect the gateway (port 9696) to the serving model (port 8500), start a virtual network using docker-compose.
-- The docker compose file is saved to [docker-compose.yaml](kubernetes/docker-compose.yaml).
-
-First, **navigate to the kubernetes folder** then run docker-compose. Follow by testing to ensure the predictions are as expected, then shut down the stack.
+> docker build -t dog-prediction-model:v1 -f deployment/model/image-model.dockerfile .
+>
+> docker build -t dog-prediction-gateway:v1 -f deployment/gateway/image-gateway.dockerfile .
 
 **Run**
 > docker-compose up
 
 **Test**
-> python kubernetes/test.py -t serving
+> python python/test.py -t gateway
 
 **Shut Down**
 > docker-compose down
 
 
+**Expected Predictions**
+```
+[['Golden retriever', 6.056427955627441], ['Great pyrenees', 2.281074285507202], ['Kuvasz', 1.2518045902252197], ['Labrador retriever', 0.1173974946141243], ['Flat coated retriever', -1.8855047225952148]]
+```
 
-## 6. Application Deployment
+## AWS EKS (Elastic Kubernetes Service)
+
+The full steps for deploying the model to AWS EKS are included in the [deployment notebook](notebooks/deployment_notebook), section 3. 
+
+After pushing the images to AWS ECR and creating pods and services, spin up a cluster with the following command. Ensure that you are logged into a user account with sufficient permissions for deploying a cluster.
+
+**NOTE**: The cost for deploying this cluster is ~$0.17/hour.
+
+**Create**
+> eksctl create cluster -f deployment/eks-config.yaml
+
+**Shut down**
+> eksctl delete cluster --name=dog-prediction-eks --disable-nodegroup-eviction
+
+
+# 6. Application Deployment
 
 The model is also deployed to an interactive application hosted by Streamlit. The application performs inference using the cloud-deployed model. Run ``streamlit run python/streamlit_app.py`` to test it locally, or go to [https://dog-prediction.streamlit.app/](https://dog-prediction.streamlit.app/) to use the deployed application.
 
