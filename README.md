@@ -41,7 +41,7 @@ We saved the best model and deployed it two ways in the [deployment notebook](no
 
 The full framework for that you will complete through both notebooks for this project is shown below:
 
-<img src="figures/dog-prediction-framework.PNG" width="700">
+<img src="figures/dog-prediction-framework.png" width="700">
 
 ## Table of Contents.
 
