@@ -27,18 +27,21 @@ Creating a classification model for identifying breeds of dogs can serve various
 - Pet adoption platforms to identify breeds within shelters, enhancing adoptiong and rehoming processes.
 - Dog shows and competitions to assist judges in verifying participating dog breeds.
 
-The following study explores the multi-class [stanford dogs image dataset](https://www.kaggle.com/datasets/jessicali9530/stanford-dogs-dataset), then uses transfer learning to train and fine-tune four modern neural network architectures. We'll use built-in [Keras applications](https://keras.io/api/applications) to use architectures with pre-trained ImageNet weights for the following models: 
+In the [modeling notebook](notebooks/modeling_notebook), you will explore the multi-class [stanford dogs image dataset](https://www.kaggle.com/datasets/jessicali9530/stanford-dogs-dataset), then uses transfer learning to train and fine-tune four modern neural network architectures. We'll use built-in [Keras applications](https://keras.io/api/applications) to use architectures with pre-trained ImageNet weights for the following models: 
 - [xception](https://arxiv.org/abs/1610.02357)
 - [InceptionResNetV2](https://arxiv.org/abs/1602.07261)
 - [EfficientNetB3](https://arxiv.org/abs/1905.11946)
 - [ConvNeXtSmall](https://arxiv.org/abs/2201.03545)
+**WARNING**: Do not attempt to run the entire notebook without a GPU with at least 8GB of memory. The models may take hours or even days to train.
 
-We saved the best model and deployed it two ways, with a front-end application hosted by streamlit.
+We saved the best model and deployed it two ways in the [deployment notebook](notebooks/deployment_notebook), with a front-end application hosted by streamlit.
 - **Serverless Deployment**: Save the best model with tensorflow lite, create a docker image for the environment with minimized dependencies, and deploy it to the cloud using AWS Lambda
 - **Kubernetes Deployment**: Convert the model to tensorflow format, set up a flask application, build docker images for them, and deploy the full application to AWS EKS. 
 - **Front-end Application**: Create a low-code front-end for our application using streamlit and connect it to the cloud-deployed AWS services.
 
-**WARNING**: Do not attempt to run the enitre notebook without a CUDA-enabled GPU. The models may take hours or even days to train. See section 3.2 for more information on how to check for an available GPU.
+The full framework for that you will complete through both notebooks for this project is shown below:
+
+<img src="figures/dog-prediction-framework.PNG" width="700">
 
 ## Table of Contents.
 

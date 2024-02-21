@@ -18,8 +18,8 @@ def main():
         "Upload Image for classification", type=["jpg", "jpeg", "heic"]
     )
 
-    #url = "https://4bfnidjam6.execute-api.us-east-1.amazonaws.com/deploy-1/predict"
-    url = 'http://ada480397f770408e91ddfe53fbce180-1951642851.us-east-1.elb.amazonaws.com/predict'
+    url = "https://4bfnidjam6.execute-api.us-east-1.amazonaws.com/deploy-1/predict"
+    #url = 'http://ada480397f770408e91ddfe53fbce180-1951642851.us-east-1.elb.amazonaws.com/predict'
 
     if image_file is not None:
         with st.spinner("Processing image..."):
