@@ -237,77 +237,7 @@ For each model, we used validation curves to tune within the following parameter
 
 We then unfroze the first 4 layers and re-trained the model with the best performing hyperparameters on the held-out test set. Each of the best performing models are compared in the following notebook section.
 
-
-### Xception
-
-- Reference: [xception: Deep Learning with Depthwise Separable Convolutions](https://arxiv.org/abs/1610.02357)
-
-Xception is "a deep convolutional neural network architecture inspired by Inception, where Inception modules have been replaced with depthwise separable convolutions". It outperforms Inception V3 on ImageNet while having the same number of parameters by making more efficient use of these model parameters. From figure 5 of the paper, the xception architecture: the data first goes through the entry flow, then through the middle flow which is repeated eight times, and finally through the exit flow. Note that all Convolution and SeparableConvolution layers are followed by batch normalization. All SeparableConvolution layers use a depth multiplier of 1 (no depth expansion).
-
-<img src="figures/xception-architecture.PNG" width="700">
-
-The tuned parameter values and performance metrics can be seen below. The trained tuned model is uploaded to [Xception_model.keras](models/Xception_model.keras).
-
-Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
---- | --- | --- | --- | --- | --- | --- | ---
-0.0001 | 100 | 0.4 | 13 | 0.901 | 0.898 | 0.900 | 0.897
-
-<img src="figures/xception-tuned.PNG" width="500">
-
-
-### InceptionResNetV2
-
-- Reference: [Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning](https://arxiv.org/abs/1602.07261) (AAAI 2017)
-
-Figures 3-9 from [Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning](https://arxiv.org/abs/1602.07261) (AAAI 2017). Figure 3 shows the architecture divided into blocks. The full architecture next to it is taken from figures 4-9. Note that each inception block is repeated the number of times as specified in figure 3, and also next to the Filter concat block. For Reduction-B, the k, l, m, n numbers represent filter bank sizes which can be looked up in Table 1.
-
-<img src="figures/resnetv2-architecture.PNG" width="1000">
-
-The tuned parameter values and performance metrics can be seen below. The trained tuned model was too large to upload to github and is excluded from the repository.
-
-Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
---- | --- | --- | --- | --- | --- | --- | ---
-0.0001 | 100 | 0.4 | 15 | 0.920 | 0.917 | 0.921 | 0.916
-
-<img src="figures/inception-tuned.PNG" width="500">
-
-
-### EfficientNetB3V2
-
-- Reference: [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946) (ICML 2019)
-
-The EfficientNet baseline architecture leverages a multi-objective neural architecture search that optimizes both accuracy and FLOPS. EfficientNetB0 is shown in Table 1 below from the paper, using MBConv layers from ([Sandler et al., 2018](https://arxiv.org/abs/1801.04381); [Tan et al., 2019](https://arxiv.org/abs/1807.11626)). EfficientNetB3 is a scaled-up version, using uniform dimension scaling as shown in (e) from the figure 2 below.
-
-<img src="figures/efficientnetb3-table.PNG" width="350">
-<img src="figures/efficientnetb3-scaling.PNG" width="700">
-
-The tuned parameter values and performance metrics can be seen below. The trained tuned model is uploaded to [effnetV2B3_model.keras](models/effnetV2B3_model.keras).
-
-Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
---- | --- | --- | --- | --- | --- | --- | ---
-0.0001 | 250 | 0.6 | 18 | 0.920 | 0.917 | 0.921 | 0.916
-
-<img src="figures/efficientnet-tuned.PNG" width="500">
-
-
-### ConvNeXtSmall
-
-- Reference: [A ConvNet for the 2020s](https://arxiv.org/abs/2201.03545) (CVPR 2022)
-
-ConvNeXt is a family of architectures that aims to make transformers viable for computer vision, aiding in tasks suck as object detection and semantic segmentation. They outperform other transformers while maintaining the simplicity and efficiency of standard ConvNets. Table 9 from the paper shows the architecture for ConvNeXt-T compared with ResNet-50 () and Swin-T (Ze et al, 2021)[https://arxiv.org/abs/2103.14030]. For differently sized ConvNeXts, only the number of blocks and the number of channels at each stage differ from ConvNeXt-T. The number of channels doubles at each new stage, so ConvNeXt-Small has double the number of channels.
-
-<img src="figures/convnextsmall-table.PNG" width="500">
-
-The tuned parameter values and performance metrics can be seen below. The trained tuned model was too large to upload to github and is excluded from the repository.
-
-Learning rate| Inner layer size | Dropout rate | Epochs | Test accuracy | Test precision | Test recall | Test f1
---- | --- | --- | --- | --- | --- | --- | ---
-0.0001 | 250 | 0.6 | 18 | 0.945 | 0.944 | 0.945 | 0.944
-
-<img src="figures/convnextsmall-tuned.PNG" width="500">
-
-
-## Compare all models
+## Model comparison
 
 The following table compiles performance metrics for all four trained models. EfficientNetB3V2 was our best performing model across all metrics. It also has the smallest size and a relatively small number of parameters, so we can assume it will run fairly fast. It was converted to tflite and saved to [model.tflite](models/model.tflite) for efficient performance during deployment.
 
@@ -383,7 +313,8 @@ Build the images from the root folder, then **navigate to the deployment folder*
 
 The full steps for deploying the model to AWS EKS are included in the [deployment notebook](notebooks/deployment_notebook), section 3. 
 
-After pushing the images to AWS ECR and creating pods and services, spin up a cluster with the following command. Ensure that you are logged into a user account with sufficient permissions for deploying a cluster.
+
+Follow along with section 3.3 in the [deployment notebook](notebooks/deployment_notebook) to push the docker images AWS ECR and create pods and services, then spin up a cluster with the following command. Ensure that you are logged into a user account with sufficient permissions for deploying a cluster.
 
 **NOTE**: The cost for deploying this cluster is ~$0.17/hour.
 

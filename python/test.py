@@ -74,7 +74,7 @@ def main():
     elif args.test == "kube":
         url = 'http://localhost:8080/predict'
     elif args.test == "eks":
-        url = 'http://ada480397f770408e91ddfe53fbce180-1951642851.us-east-1.elb.amazonaws.com/predict'
+        url = 'http://ac842723604204b1d8b94efb760d38a7-1664883915.us-east-1.elb.amazonaws.com/predict'
 
     img = download_image(image_url)
 

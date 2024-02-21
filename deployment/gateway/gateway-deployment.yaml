@@ -15,6 +15,7 @@ spec:
       containers:
       - name: dog-prediction-gateway
         image: dog-prediction-gateway:v1
+        #image: {AWS_ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/dog-prediction-images:dog-prediction-gateway
         resources:
           limits:
             memory: "128Mi"
